@@ -26,22 +26,22 @@ def find_dict_with_key_value(d, key, value):
     return None
 
 #
-def extract_met_clo(value, default_value, min_value, max_value):
-    if value is None or value == "":
-        return default_value
-
-    if isinstance(value, (int, float)):
-        float_value = float(value)
-
-        try:
-            float_value = float(value)
-        except ValueError:
-            return None   # pending
-
-    if min_value <= float_value <= max_value:
-        return float_value
-
-    return default_value
+# def extract_met_clo(value, default_value, min_value, max_value):
+#     if value is None or value == "":
+#         return default_value
+#
+#     if isinstance(value, (int, float)):
+#         float_value = float(value)
+#
+#         try:
+#             float_value = float(value)
+#         except ValueError:
+#             return None   # pending
+#
+#     if min_value <= float_value <= max_value:
+#         return float_value
+#
+#     return default_value
 #
 #
 # def get_inputs(selected_model: str, form_content: dict, units: str, functionality_selection: str):
@@ -132,8 +132,6 @@ def get_inputs(
             original_value = input_dict["value"]
             converted_value = extract_float(str(original_value))
 
-
-            print(f'before: converted value: {converted_value}')
             if (
                 converted_value is not None
                 and model_input.min <= converted_value <= model_input.max

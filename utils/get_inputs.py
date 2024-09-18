@@ -25,6 +25,65 @@ def find_dict_with_key_value(d, key, value):
                 return result
     return None
 
+#
+def extract_met_clo(value, default_value, min_value, max_value):
+    if value is None or value == "":
+        return default_value
+
+    if isinstance(value, (int, float)):
+        float_value = float(value)
+
+        try:
+            float_value = float(value)
+        except ValueError:
+            return None   # pending
+
+    if min_value <= float_value <= max_value:
+        return float_value
+
+    return default_value
+#
+#
+# def get_inputs(selected_model: str, form_content: dict, units: str, functionality_selection: str):
+#     if selected_model is None:
+#         return no_update
+#
+#     list_model_inputs = deepcopy(Models[selected_model].value.inputs)
+#
+#     if functionality_selection == Functionalities.Compare.value and selected_model in [Models.PMV_ashrae.name]:
+#         list_model_inputs2 = deepcopy(Models[selected_model].value.inputs2)
+#         combined_model_inputs = list_model_inputs + list_model_inputs2
+#     else:
+#         combined_model_inputs = list_model_inputs
+#
+#     if units == UnitSystem.IP.value:
+#         combined_model_inputs = convert_units(combined_model_inputs, UnitSystem.SI.value)
+#
+#     inputs = {}
+#     for model_input in combined_model_inputs:
+#         default_value = model_input.value
+#         input_id = model_input.id
+#         input_dict = find_dict_with_key_value(form_content, "id", input_id)
+#
+#         if input_dict and "value" in input_dict:
+#             original_value = input_dict["value"]
+#
+#             if input_id in ["met", "clo"]:
+#                 processed_value = extract_met_clo(original_value, default_value, model_input.min,
+#                                                   model_input.max)
+#                 inputs[input_id] = processed_value if processed_value is not None else default_value
+#             else:
+#                 try:
+#                     inputs[input_id] = float(original_value)
+#                 except ValueError:
+#                     inputs[input_id] = default_value
+#         else:
+#             inputs[input_id] = default_value
+#
+#     print(f'inputs: {inputs}')
+#
+#     return inputs
+
 
 def extract_float(value):
     if isinstance(value, (int, float)):
@@ -73,6 +132,8 @@ def get_inputs(
             original_value = input_dict["value"]
             converted_value = extract_float(str(original_value))
 
+
+            print(f'before: converted value: {converted_value}')
             if (
                 converted_value is not None
                 and model_input.min <= converted_value <= model_input.max

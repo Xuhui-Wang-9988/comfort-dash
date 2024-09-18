@@ -63,6 +63,7 @@ class ElementsIDs(Enum):
     PMV_ASHRAE_SPEED_SELECTION = "id-pmv-ashrae-speed-method"
     UNIT_TOGGLE = "id-unit-toggle"  # FOR IP / SI Unit system switch
     GRAPH_HOVER = "id-graph-hover"
+    HOME_LAYOUT_PAGE = "id-home-layout-page"
 
 
 class Config(Enum):

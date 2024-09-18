@@ -10,7 +10,7 @@ from components.functionality_selection import functionality_selection
 from components.input_environmental_personal import input_environmental_personal
 from components.my_card import my_card
 from components.show_results import display_results
-from utils.get_inputs import get_inputs
+from utils.get_inputs import get_inputs,extract_met_clo
 from utils.my_config_file import (
     URLS,
     ElementsIDs,
@@ -20,13 +20,20 @@ from utils.my_config_file import (
     Charts,
     ChartsInfo,
     MyStores,
+
 )
 import plotly.graph_objects as go
 
+from urllib.parse import parse_qs, urlencode
+
+
 dash.register_page(__name__, path=URLS.HOME.value)
 
+#
 layout = dmc.Stack(
-    [
+    #ADD ID for the layout
+    id=ElementsIDs.HOME_LAYOUT_PAGE.value,
+    children=[
         dmc.Grid(
             children=[
                 dmc.GridCol(
@@ -63,6 +70,7 @@ layout = dmc.Stack(
                                 id=ElementsIDs.CHART_CONTAINER.value,
                             ),
                             dmc.Text(id=ElementsIDs.note_model.value),
+                            dcc.Location(id=ElementsIDs.URL.value, refresh=False),
                         ],
                     ),
                     span={"base": 12, "sm": Dimensions.right_container_width.value},
@@ -76,6 +84,8 @@ layout = dmc.Stack(
 
 @callback(
     Output(MyStores.input_data.value, "data"),
+    Output(ElementsIDs.URL.value, "search", allow_duplicate=True),
+    Input(ElementsIDs.HOME_LAYOUT_PAGE.value, "n_clicks"),
     Input(ElementsIDs.inputs_form.value, "n_clicks"),
     Input(ElementsIDs.inputs_form.value, "children"),
     Input(ElementsIDs.clo_input.value, "value"),
@@ -84,34 +94,56 @@ layout = dmc.Stack(
     Input(ElementsIDs.chart_selected.value, "value"),
     Input(ElementsIDs.functionality_selection.value, "value"),
     State(ElementsIDs.MODEL_SELECTION.value, "value"),
+    State(MyStores.input_data.value, "data"),
+    prevent_initial_call=True,
 )
 def update_store_inputs(
-    form_clicks: int,
-    form_content: dict,
-    clo_value: float,
-    met_value: float,
-    units_selection: str,
-    chart_selected: str,
-    functionality_selection: str,
-    selected_model: str,
+        form_clicks, HOME_LAYOUT_PAGE_clicks, form_content, clo_value, met_value,
+        units_selection, chart_selected, functionality_selection, selected_model, current_inputs
 ):
-    units = UnitSystem.IP.value if units_selection else UnitSystem.SI.value
-    inputs = get_inputs(selected_model, form_content, units, functionality_selection)
+    if selected_model is None:
+        return no_update, no_update
 
-    if ctx.triggered:
-        triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
-        if triggered_id == ElementsIDs.clo_input.value:
-            inputs[ElementsIDs.clo_input.value] = float(clo_value)
-        if triggered_id == ElementsIDs.met_input.value:
-            inputs[ElementsIDs.met_input.value] = float(met_value)
+    units = UnitSystem.IP.value if units_selection else UnitSystem.SI.value
+
+    # current if possible
+    inputs = current_inputs.copy() if current_inputs else {}
+
+    # update
+    new_inputs = get_inputs(selected_model, form_content, units, functionality_selection)
+    inputs.update(new_inputs)
+
+    # default
+    # default_clo = 1.0
+    # default_met = 0.61
+    #
+    # if ctx.triggered:
+    #     triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    #     if triggered_id == ElementsIDs.clo_input.value:
+    #         clo_input = Models[selected_model].value.inputs[0]
+    #         processed_clo = extract_met_clo(clo_value, default_clo, clo_input.min, clo_input.max)
+    #         inputs[ElementsIDs.clo_input.value] = processed_clo if processed_clo is not None else default_clo
+    #     elif triggered_id == ElementsIDs.met_input.value:
+    #         met_input = Models[selected_model].value.inputs[1]
+    #         processed_met = extract_met_clo(met_value, default_met, met_input.min, met_input.max)
+    #         inputs[ElementsIDs.met_input.value] = processed_met if processed_met is not None else default_met
+    #
+    # inputs[ElementsIDs.clo_input.value] = inputs.get(ElementsIDs.clo_input.value, default_clo)
+    # inputs[ElementsIDs.met_input.value] = inputs.get(ElementsIDs.met_input.value, default_met)
 
     inputs[ElementsIDs.UNIT_TOGGLE.value] = units
     inputs[ElementsIDs.MODEL_SELECTION.value] = selected_model
     inputs[ElementsIDs.chart_selected.value] = chart_selected
     inputs[ElementsIDs.functionality_selection.value] = functionality_selection
 
-    return inputs
+    for model_input in Models[selected_model].value.inputs:
+        if model_input.id not in inputs:
+            inputs[model_input.id] = model_input.value
 
+    url_search = f"?{urlencode(inputs)}"
+    print(f"url_params: {url_search}")
+
+    return inputs, url_search
 
 @callback(
     Output(ElementsIDs.INPUT_SECTION.value, "children"),

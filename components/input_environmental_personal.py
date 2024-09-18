@@ -529,7 +529,7 @@ def create_autocomplete(values: ModelInputsInfo):
     )
 
 
-def update_options(input_value, options, selection_enum):
+def update_options(input_value, options, selection_enum, min_value, max_value):
     if input_value is None or input_value == "":
         return [], ""
 
@@ -540,6 +540,11 @@ def update_options(input_value, options, selection_enum):
 
     try:
         input_number = float(input_value)
+        if input_number < min_value:
+            return option_values, min_value
+        elif input_number > max_value:
+            return option_values, max_value
+
         filtered_options = []
         for option in selection_enum:
             # Extract the value
@@ -567,7 +572,7 @@ def update_options(input_value, options, selection_enum):
     State(ElementsIDs.met_input.value, "data"),
 )
 def update_metabolic_rate_options(input_value, _):
-    return update_options(input_value, MetabolicRateSelection, MetabolicRateSelection)
+    return update_options(input_value, MetabolicRateSelection, MetabolicRateSelection, 1.0, 4.0)
 
 
 @callback(
@@ -577,7 +582,7 @@ def update_metabolic_rate_options(input_value, _):
     State(ElementsIDs.clo_input.value, "data"),
 )
 def update_clothing_level_options(input_value, _):
-    return update_options(input_value, ClothingSelection, ClothingSelection)
+    return update_options(input_value, ClothingSelection, ClothingSelection, 0.0, 1.5)
 
 
 @callback(
@@ -587,7 +592,7 @@ def update_clothing_level_options(input_value, _):
     State(ElementsIDs.met_input_input2.value, "data"),
 )
 def update_metabolic_rate_options(input_value, _):
-    return update_options(input_value, MetabolicRateSelection, MetabolicRateSelection)
+    return update_options(input_value, MetabolicRateSelection, MetabolicRateSelection, 1.0, 4.0)
 
 
 @callback(
@@ -597,4 +602,4 @@ def update_metabolic_rate_options(input_value, _):
     State(ElementsIDs.clo_input_input2.value, "data"),
 )
 def update_clothing_level_options(input_value, _):
-    return update_options(input_value, ClothingSelection, ClothingSelection)
+    return update_options(input_value, ClothingSelection, ClothingSelection, 0.0, 1.5)

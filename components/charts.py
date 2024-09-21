@@ -15,7 +15,7 @@ from utils.my_config_file import ElementsIDs, Models, Functionalities
 from utils.website_text import TextHome
 import matplotlib
 from pythermalcomfort.models import adaptive_en
-from pythermalcomfort.psychrometrics import t_o
+from pythermalcomfort.psychrometrics import t_o, psy_ta_rh
 
 matplotlib.use("Agg")
 
@@ -43,12 +43,171 @@ def chart_selector(selected_model: str, function_selection: str):
     )
 
 
-def generate_adaptive_en_chart():
+def pmv_en_psy_chart(
+    inputs: dict = None,
+    model="iso",
+    function_selection: str = Functionalities.Default,
+    use_to: bool = False,
+):
     traces = []
 
+    category_3_up = np.linspace(20.5, 27.1, 100)
+    category_2_up = np.linspace(21.4, 26.2, 100)
+    category_1_up = np.linspace(22.7, 24.7, 100)
+    category_3_low = np.array([33.3, 24.2])
+    category_2_low = np.array([32, 25.5])
+    category_1_low = np.array([30, 27.4])
+    category_1_x = np.concatenate((category_1_up, category_1_low))
+    category_2_x = np.concatenate((category_2_up, category_2_low))
+    category_3_x = np.concatenate((category_3_up, category_3_low))
+
+    # Category III
+    category_3_y = []
+    for t in category_3_up:
+        category_3_y.append(psy_ta_rh(tdb=t, rh=100, p_atm=101325)["hr"] * 1000)
+    category_3_y = np.concatenate((category_3_y, [0] * 2))
+    traces.append(
+        go.Scatter(
+            x=category_3_x,
+            y=category_3_y,
+            mode="lines",
+            line=dict(color="rgba(0,0,0,0)"),
+            fill="toself",
+            fillcolor="rgba(0,255,0,0.2)",
+            showlegend=False,
+            hoverinfo="none",
+        )
+    )
+
+    # Category II
+    category_2_y = []
+    for t in category_2_up:
+        category_2_y.append(psy_ta_rh(tdb=t, rh=100, p_atm=101325)["hr"] * 1000)
+    category_2_y = np.concatenate((category_2_y, [0] * 2))
+    traces.append(
+        go.Scatter(
+            x=category_2_x,
+            y=category_2_y,
+            mode="lines",
+            line=dict(color="rgba(0,0,0,0)"),
+            fill="toself",
+            fillcolor="rgba(0,255,0,0.3)",
+            showlegend=False,
+            hoverinfo="none",
+        )
+    )
+
+    # Category I
+    category_1_y = []
+    for t in category_1_up:
+        category_1_y.append(psy_ta_rh(tdb=t, rh=100, p_atm=101325)["hr"] * 1000)
+    category_1_y = np.concatenate((category_1_y, [0] * 2))
+    traces.append(
+        go.Scatter(
+            x=category_1_x,
+            y=category_1_y,
+            mode="lines",
+            line=dict(color="rgba(0,0,0,0)"),
+            fill="toself",
+            fillcolor="rgba(0,255,0,0.4)",
+            showlegend=False,
+            hoverinfo="none",
+        )
+    )
+
+    rh_list = np.arange(0, 101, 10)
+    tdb = np.linspace(10, 36, 500)
+    for rh in rh_list:
+        hr_list = np.array(
+            [psy_ta_rh(tdb=t, rh=rh, p_atm=101325)["hr"] * 1000 for t in tdb]
+        )
+        trace = go.Scatter(
+            x=tdb,
+            y=hr_list,
+            mode="lines",
+            line=dict(color="black", width=1),
+            hoverinfo="x+y",
+            name=f"{rh}% RH",
+            showlegend=False,
+        )
+        traces.append(trace)
+
+    tdb = inputs[ElementsIDs.t_db_input.value]
+    rh = inputs[ElementsIDs.rh_input.value]
+    tr = inputs[ElementsIDs.t_r_input.value]
+
+    if use_to:
+        x_value = t_o(tdb=tdb, tr=tr, v=inputs[ElementsIDs.v_input.value])
+        x_label = "Operative Temperature [°C]"
+    else:
+        x_value = tdb
+        x_label = "Dry-bulb Temperature [°C]"
+
+    red_point = [x_value, psy_ta_rh(tdb, rh, p_atm=101325)["hr"] * 1000]
+    traces.append(
+        go.Scatter(
+            x=[red_point[0]],
+            y=[red_point[1]],
+            mode="markers",
+            marker=dict(
+                color="red",
+                size=4,
+            ),
+            showlegend=False,
+        )
+    )
+    theta = np.linspace(0, 2 * np.pi, 100)
+    circle_x = red_point[0] + 0.6 * np.cos(theta)
+    circle_y = red_point[1] + 1.2 * np.sin(theta)
+    traces.append(
+        go.Scatter(
+            x=circle_x,
+            y=circle_y,
+            mode="lines",
+            line=dict(color="red", width=1.5),
+            showlegend=False,
+        )
+    )
+
+    layout = go.Layout(
+        xaxis=dict(title=x_label, showgrid=False),
+        yaxis=dict(title="Humidity Ratio [g_w/kg_da]", showgrid=False),
+        showlegend=True,
+        plot_bgcolor="white",
+        annotations=[
+            dict(
+                x=14,
+                y=28,
+                xref="x",
+                yref="y",
+                text="Hover over the chart for details",
+                showarrow=False,
+                align="left",
+                bgcolor="rgba(255,255,255,0.8)",
+                bordercolor="rgba(0,0,0,0)",
+                font=dict(size=14),
+            )
+        ],
+    )
+
+    fig = go.Figure(data=traces, layout=layout)
+
+    return fig
+
+
+def generate_adaptive_en_chart(
+    inputs: dict = None, model="iso", function_selection: str = Functionalities.Default
+):
+    traces = []
+
+    tdb = inputs[ElementsIDs.t_db_input.value]
+    tr = inputs[ElementsIDs.t_r_input.value]
+    v = inputs[ElementsIDs.v_input.value]
+    t_running_mean = inputs[ElementsIDs.t_rm_input.value]
+
     x_values = np.array([10, 30])
-    results_min = adaptive_en(tdb=25, tr=25, t_running_mean=x_values[0], v=0.1)
-    results_max = adaptive_en(tdb=25, tr=25, t_running_mean=x_values[1], v=0.1)
+    results_min = adaptive_en(tdb=tdb, tr=tr, t_running_mean=x_values[0], v=v)
+    results_max = adaptive_en(tdb=tdb, tr=tr, t_running_mean=x_values[1], v=v)
 
     y_values_cat_iii_up = [
         results_min["tmp_cmf_cat_iii_up"],
@@ -77,10 +236,14 @@ def generate_adaptive_en_chart():
         results_max["tmp_cmf_cat_i_low"],
     ]
 
+    category_3_x = np.concatenate((x_values, x_values[::-1]))
+    category_2_x = np.concatenate((x_values, x_values[::-1]))
+    category_1_x = np.concatenate((x_values, x_values[::-1]))
+
     # traces[0]
     traces.append(
         go.Scatter(
-            x=np.concatenate([x_values, x_values[::-1]]),
+            x=category_3_x,
             y=np.concatenate([y_values_cat_iii_up, y_values_cat_iii_low[::-1]]),
             fill="toself",
             fillcolor="rgba(144, 238, 144, 0.3)",
@@ -92,7 +255,7 @@ def generate_adaptive_en_chart():
     # traces[1]
     traces.append(
         go.Scatter(
-            x=np.concatenate([x_values, x_values[::-1]]),
+            x=category_2_x,
             y=np.concatenate([y_values_cat_ii_up, y_values_cat_ii_low[::-1]]),
             fill="toself",
             fillcolor="rgba(34, 139, 34, 0.5)",
@@ -104,7 +267,7 @@ def generate_adaptive_en_chart():
     # traces[2]
     traces.append(
         go.Scatter(
-            x=np.concatenate([x_values, x_values[::-1]]),
+            x=category_1_x,
             y=np.concatenate([y_values_cat_i_up, y_values_cat_i_low[::-1]]),
             fill="toself",
             fillcolor="rgba(0, 100, 0, 0.7)",
@@ -113,8 +276,10 @@ def generate_adaptive_en_chart():
             mode="lines",
         )
     )
-    x = 25
-    y = t_o(tdb=25, tr=25, v=0.1)
+
+    # Red point
+    x = t_running_mean
+    y = t_o(tdb=tdb, tr=tr, v=v)
     red_point = [x, y]
     # traces[3]
     traces.append(
@@ -126,7 +291,6 @@ def generate_adaptive_en_chart():
                 color="red",
                 size=6,
             ),
-            # name='point',
             showlegend=False,
         )
     )
@@ -140,7 +304,6 @@ def generate_adaptive_en_chart():
             y=circle_y,
             mode="lines",
             line=dict(color="red", width=2.5),
-            # name='circle',
             showlegend=False,
         )
     )

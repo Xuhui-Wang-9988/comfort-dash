@@ -2,7 +2,12 @@ import dash
 import dash_mantine_components as dmc
 from dash import html, callback, Output, Input, no_update, State, ctx, dcc
 
-from components.charts import t_rh_pmv, chart_selector, generate_adaptive_en_chart
+from components.charts import (
+    t_rh_pmv,
+    chart_selector,
+    generate_adaptive_en_chart,
+    pmv_en_psy_chart,
+)
 from components.dropdowns import (
     model_selection,
 )
@@ -160,6 +165,9 @@ def update_note_model(selected_model, function_selection):
 
 
 # todo: double check the calculating method from pythermalcomfort lib, especially the units
+last_valid_annotation = None
+
+
 @callback(
     Output(ElementsIDs.GRAPH_HOVER.value, "figure"),
     Input(ElementsIDs.GRAPH_HOVER.value, "hoverData"),
@@ -167,32 +175,59 @@ def update_note_model(selected_model, function_selection):
     State(MyStores.input_data.value, "data"),
 )
 def update_hover_annotation(hover_data, figure, inputs):
-    if hover_data:
-        point = hover_data["points"][0]
-        t_db = point["x"]
-        rh = point["y"]
+    # For ensure tdp never shown as nan value
+    global last_valid_annotation
 
-        # calculations
-        psy_results = psy_ta_rh(t_db, rh)
-        t_wb_value = psy_results.t_wb
-        t_dp_value = psy_results.t_dp
+    if (
+        hover_data
+        and figure
+        and "points" in hover_data
+        and len(hover_data["points"]) > 0
+    ):
+        chart_selected = inputs[ElementsIDs.chart_selected.value]
 
-        # wa: aka humidity ratio, [kg water/kg dry air]
-        wa = psy_results.hr * 1000  # convert to g/kgda
+        # not show annotation for adaptive methods
+        if chart_selected in [Charts.psychrometric.value.name, Charts.t_rh.value.name]:
+            point = hover_data["points"][0]
 
-        # enthalpy
-        h = psy_results.h / 1000  # convert to kj/kg
+            if "x" in point and "y" in point:
+                t_db = point["x"]
+                rh = point["y"]
 
-        annotation_text = (
-            f"t<sub>db</sub>: {t_db:.1f} °C<br>"
-            f"RH: {rh:.1f} %<br>"
-            f"W<sub>a</sub>: {wa:.1f} g<sub>w</sub>/kg<sub>da</sub><br>"
-            f"t<sub>wb</sub>: {t_wb_value:.1f} °C<br>"
-            f"t<sub>dp</sub>: {t_dp_value:.1f} °C<br>"
-            f"h: {h:.1f} kJ/kg<br>"
-        )
+                # check if y <= 0
+                if rh <= 0:
+                    if (
+                        last_valid_annotation is not None
+                        and "annotations" in figure["layout"]
+                    ):
+                        figure["layout"]["annotations"][0][
+                            "text"
+                        ] = last_valid_annotation
+                    return figure
 
-        figure["layout"]["annotations"][0]["text"] = annotation_text
+                # calculations
+                psy_results = psy_ta_rh(t_db, rh)
+                t_wb_value = psy_results.t_wb
+                t_dp_value = psy_results.t_dp
+                wa = psy_results.hr * 1000  # convert to g/kgda
+                h = psy_results.h / 1000  # convert to kj/kg
+
+                annotation_text = (
+                    f"t<sub>db</sub>: {t_db:.1f} °C<br>"
+                    f"RH: {rh:.1f} %<br>"
+                    f"W<sub>a</sub>: {wa:.1f} g<sub>w</sub>/kg<sub>da</sub><br>"
+                    f"t<sub>wb</sub>: {t_wb_value:.1f} °C<br>"
+                    f"t<sub>dp</sub>: {t_dp_value:.1f} °C<br>"
+                    f"h: {h:.1f} kJ/kg<br>"
+                )
+
+                if (
+                    "annotations" in figure["layout"]
+                    and len(figure["layout"]["annotations"]) > 0
+                ):
+                    figure["layout"]["annotations"][0]["text"] = annotation_text
+            else:
+                print("Unexpected hover data structure:", point)
 
     return figure
 
@@ -210,13 +245,13 @@ def update_chart(inputs: dict, function_selection: str):
 
     placeholder = html.Div(
         [
-            dmc.Title("Unfortunately this chart has not been implemented yet", order=4),
+            dmc.Title("This chart has not been implemented yet", order=4),
             dmc.Image(
                 src="assets/media/chart_placeholder.png",
             ),
         ]
     )
-    image = go.Figure()
+    image = None
 
     if chart_selected == Charts.t_rh.value.name:
         if selected_model == Models.PMV_EN.name:
@@ -228,9 +263,26 @@ def update_chart(inputs: dict, function_selection: str):
                 inputs=inputs, model="ashrae", function_selection=function_selection
             )
 
-    if chart_selected == Charts.adaptive_en.value.name:
+    elif chart_selected == Charts.adaptive_en.value.name:
         if selected_model == Models.Adaptive_EN.name:
-            image = generate_adaptive_en_chart()
+            image = generate_adaptive_en_chart(
+                inputs=inputs, model="iso", function_selection=function_selection
+            )
+
+    elif chart_selected in [
+        Charts.psychrometric.value.name,
+        Charts.psychrometric_operative.value.name,
+    ]:
+        if selected_model == Models.PMV_EN.name:
+            use_to = chart_selected == Charts.psychrometric_operative.value.name
+            image = pmv_en_psy_chart(
+                inputs=inputs,
+                model="iso",
+                function_selection=function_selection,
+                use_to=use_to,
+            )
+        elif selected_model == Models.PMV_ashrae.name:
+            image = None
 
     note = ""
     chart: ChartsInfo
@@ -240,12 +292,25 @@ def update_chart(inputs: dict, function_selection: str):
 
     graph_component = (
         placeholder
-        if not image.data
-        else dcc.Graph(
-            id=ElementsIDs.GRAPH_HOVER.value,
-            figure=image,  # Pass the Plotly figure object here
-            # config={"displayModeBar": False},
-            config={"displayModeBar": True, "scrollZoom": True},
+        if image is None
+        else dmc.Paper(
+            children=[
+                dcc.Graph(
+                    id=ElementsIDs.GRAPH_HOVER.value,
+                    figure=image,
+                    config={"displayModeBar": True, "scrollZoom": True},
+                    style={"height": "100%", "width": "100%"},
+                )
+            ],
+            shadow="none",
+            p=0,
+            style={
+                "border": "1px solid black",
+                "height": "530px",
+                "width": "100%",
+                "overflow": "hidden",
+                "boxSizing": "border-box",
+            },
         )
     )
 

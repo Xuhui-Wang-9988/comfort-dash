@@ -21,13 +21,9 @@ def display_results(inputs: dict):
     units: str = inputs[ElementsIDs.UNIT_TOGGLE.value]
 
     results = []
-    # todo add unit detect if IP inputs and conver into SI calculation
-    columns: int = 2
+    columns: int = 3
     if selected_model == Models.PMV_EN.name or selected_model == Models.PMV_ashrae.name:
-        columns = 3
-        standard = "ISO"
-        if selected_model == Models.PMV_ashrae.name:
-            standard = "ashrae"
+        standard = "ISO" if selected_model == Models.PMV_EN.name else "ashrae"
 
         r_pmv = pmv_ppd(
             tdb=inputs[ElementsIDs.t_db_input.value],
@@ -46,21 +42,68 @@ def display_results(inputs: dict):
             limit_inputs=True,
             standard=standard,
         )
-        results.append(dmc.Center(dmc.Text(f"PMV: {r_pmv['pmv']}")))
-        results.append(dmc.Center(dmc.Text(f"PPD: {r_pmv['ppd']}")))
-        comfort_category = mapping(
-            r_pmv["pmv"],
-            {
-                -2.5: "Cold",
-                -1.5: "Cool",
-                -0.5: "Slightly Cool",
-                0.5: "Neutral",
-                1.5: "Slightly Warm",
-                2.5: "Warm",
-                10: "Hot",
-            },
+
+        # Standard Checker for PMV
+        # todo: need to add standard for adaptive methods by ensure if the current red point out of area
+        if standard == "ashrae":
+            if -0.5 <= r_pmv["pmv"] <= 0.5:
+                compliance_text = "✔  Complies with ASHRAE Standard 55-2023"
+                compliance_color = "green"
+            else:
+                compliance_text = "✘  Does not comply with ASHRAE Standard 55-2023"
+                compliance_color = "red"
+        else:  # ISO
+            if -0.7 <= r_pmv["pmv"] <= 0.7:
+                compliance_text = "✔  Complies with EN-16798"
+                compliance_color = "green"
+            else:
+                compliance_text = "✘  Does not comply with EN-16798"
+                compliance_color = "red"
+
+        standard_checker = dmc.Text(
+            compliance_text,
+            c=compliance_color,
+            ta="center",
+            size="md",
+            style={"width": "100%"},
         )
-        results.append(dmc.Center(dmc.Text(f"Sensation: {comfort_category}")))
+
+        results = [
+            standard_checker,
+            dmc.SimpleGrid(
+                cols=columns,
+                spacing="xs",
+                verticalSpacing="xs",
+                children=[
+                    dmc.Center(dmc.Text(f"PMV: {r_pmv['pmv']:.2f}")),
+                    dmc.Center(dmc.Text(f"PPD: {r_pmv['ppd']:.1f}%")),
+                ],
+            ),
+        ]
+
+        if selected_model == Models.PMV_ashrae.name:
+            comfort_category = mapping(
+                r_pmv["pmv"],
+                {
+                    -2.5: "Cold",
+                    -1.5: "Cool",
+                    -0.5: "Slightly Cool",
+                    0.5: "Neutral",
+                    1.5: "Slightly Warm",
+                    2.5: "Warm",
+                    10: "Hot",
+                },
+            )
+            results[1].children.append(
+                dmc.Center(dmc.Text(f"Sensation: {comfort_category}"))
+            )
+        elif selected_model == Models.PMV_EN.name:
+            comfort_category = mapping(
+                abs(r_pmv["pmv"]), {0.2: "I", 0.5: "II", 0.7: "III", float("inf"): "IV"}
+            )
+            results[1].children.append(
+                dmc.Center(dmc.Text(f"Category: {comfort_category}"))
+            )
 
         # todo add unit detect if IP inputs and conver into SI calculation
         if (
@@ -164,13 +207,8 @@ def display_results(inputs: dict):
             align="center",
         )
 
-    return (
-        dmc.SimpleGrid(
-            cols=columns,
-            spacing="xs",
-            verticalSpacing="xs",
-            children=results,
-        ),
+    return dmc.Stack(
+        children=results, gap="md", align="stretch", style={"width": "100%"}
     )
 
 

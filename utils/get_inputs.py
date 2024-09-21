@@ -8,6 +8,7 @@ from utils.my_config_file import (
     ElementsIDs,
     Functionalities,
 )
+count = 0
 
 
 def find_dict_with_key_value(d, key, value):
@@ -59,10 +60,10 @@ def get_inputs(
         combined_model_inputs = list_model_inputs
 
     if units == UnitSystem.IP.value:
+        print('use converted units')
         combined_model_inputs = convert_units(
             combined_model_inputs, UnitSystem.SI.value
         )
-
     inputs = {}
     for model_input in combined_model_inputs:
         default_value = model_input.value

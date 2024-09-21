@@ -133,7 +133,7 @@ class Charts(Enum):
         id="id_t_rh_chart",
         note_chart="This chart represents only two variables, dry-bulb temperature and relative humidity. The PMV calculations are still based on all the psychrometric variables, but the visualization becomes easier to understand.",
     )
-    adaptive_en : ChartsInfo = ChartsInfo(
+    adaptive_en: ChartsInfo = ChartsInfo(
         name="Adaptive EN",
         id="id_adaptive_en_chart",
         note_chart="This chart shows how the PMV comfort zone changes according to the input parameters you selected. You can toggle on and off the lines by clicking on the relative variable in the legend.",
@@ -560,7 +560,6 @@ class Models(Enum):
         charts=[
             # todo add the right charts
             Charts.adaptive_en.value,
-
         ],
         inputs=[
             ModelInputsInfo(

@@ -8,6 +8,7 @@ from utils.my_config_file import (
     ElementsIDs,
     Functionalities,
 )
+
 count = 0
 
 
@@ -60,7 +61,7 @@ def get_inputs(
         combined_model_inputs = list_model_inputs
 
     if units == UnitSystem.IP.value:
-        print('use converted units')
+        print("use converted units")
         combined_model_inputs = convert_units(
             combined_model_inputs, UnitSystem.SI.value
         )

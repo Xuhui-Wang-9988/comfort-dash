@@ -88,14 +88,14 @@ layout = dmc.Stack(
     State(ElementsIDs.MODEL_SELECTION.value, "value"),
 )
 def update_store_inputs(
-        form_clicks: int,
-        form_content: dict,
-        clo_value: float,
-        met_value: float,
-        units_selection: str,
-        chart_selected: str,
-        functionality_selection: str,
-        selected_model: str,
+    form_clicks: int,
+    form_content: dict,
+    clo_value: float,
+    met_value: float,
+    units_selection: str,
+    chart_selected: str,
+    functionality_selection: str,
+    selected_model: str,
 ):
     units = UnitSystem.IP.value if units_selection else UnitSystem.SI.value
     inputs = get_inputs(selected_model, form_content, units, functionality_selection)
@@ -161,16 +161,16 @@ def update_note_model(selected_model, function_selection):
 
 # todo: double check the calculating method from pythermalcomfort lib, especially the units
 @callback(
-    Output(ElementsIDs.GRAPH_HOVER.value, 'figure'),
-    Input(ElementsIDs.GRAPH_HOVER.value, 'hoverData'),
-    State(ElementsIDs.GRAPH_HOVER.value, 'figure'),
+    Output(ElementsIDs.GRAPH_HOVER.value, "figure"),
+    Input(ElementsIDs.GRAPH_HOVER.value, "hoverData"),
+    State(ElementsIDs.GRAPH_HOVER.value, "figure"),
     State(MyStores.input_data.value, "data"),
 )
 def update_hover_annotation(hover_data, figure, inputs):
     if hover_data:
-        point = hover_data['points'][0]
-        t_db = point['x']
-        rh = point['y']
+        point = hover_data["points"][0]
+        t_db = point["x"]
+        rh = point["y"]
 
         # calculations
         psy_results = psy_ta_rh(t_db, rh)
@@ -192,7 +192,7 @@ def update_hover_annotation(hover_data, figure, inputs):
             f"h: {h:.1f} kJ/kg<br>"
         )
 
-        figure['layout']['annotations'][0]['text'] = annotation_text
+        figure["layout"]["annotations"][0]["text"] = annotation_text
 
     return figure
 
@@ -228,8 +228,6 @@ def update_chart(inputs: dict, function_selection: str):
                 inputs=inputs, model="ashrae", function_selection=function_selection
             )
 
-
-
     if chart_selected == Charts.adaptive_en.value.name:
         if selected_model == Models.Adaptive_EN.name:
             image = generate_adaptive_en_chart()
@@ -247,7 +245,7 @@ def update_chart(inputs: dict, function_selection: str):
             id=ElementsIDs.GRAPH_HOVER.value,
             figure=image,  # Pass the Plotly figure object here
             # config={"displayModeBar": False},
-            config={'displayModeBar': True, 'scrollZoom': True},
+            config={"displayModeBar": True, "scrollZoom": True},
         )
     )
 

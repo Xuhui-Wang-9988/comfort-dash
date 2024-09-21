@@ -50,114 +50,141 @@ def generate_adaptive_en_chart():
     results_min = adaptive_en(tdb=25, tr=25, t_running_mean=x_values[0], v=0.1)
     results_max = adaptive_en(tdb=25, tr=25, t_running_mean=x_values[1], v=0.1)
 
-    y_values_cat_iii_up = [results_min['tmp_cmf_cat_iii_up'], results_max['tmp_cmf_cat_iii_up']]
-    y_values_cat_iii_low = [results_min['tmp_cmf_cat_iii_low'], results_max['tmp_cmf_cat_iii_low']]
+    y_values_cat_iii_up = [
+        results_min["tmp_cmf_cat_iii_up"],
+        results_max["tmp_cmf_cat_iii_up"],
+    ]
+    y_values_cat_iii_low = [
+        results_min["tmp_cmf_cat_iii_low"],
+        results_max["tmp_cmf_cat_iii_low"],
+    ]
 
-    y_values_cat_ii_up = [results_min['tmp_cmf_cat_ii_up'], results_max['tmp_cmf_cat_ii_up']]
-    y_values_cat_ii_low = [results_min['tmp_cmf_cat_ii_low'], results_max['tmp_cmf_cat_ii_low']]
+    y_values_cat_ii_up = [
+        results_min["tmp_cmf_cat_ii_up"],
+        results_max["tmp_cmf_cat_ii_up"],
+    ]
+    y_values_cat_ii_low = [
+        results_min["tmp_cmf_cat_ii_low"],
+        results_max["tmp_cmf_cat_ii_low"],
+    ]
 
-    y_values_cat_i_up = [results_min['tmp_cmf_cat_i_up'], results_max['tmp_cmf_cat_i_up']]
-    y_values_cat_i_low = [results_min['tmp_cmf_cat_i_low'], results_max['tmp_cmf_cat_i_low']]
+    y_values_cat_i_up = [
+        results_min["tmp_cmf_cat_i_up"],
+        results_max["tmp_cmf_cat_i_up"],
+    ]
+    y_values_cat_i_low = [
+        results_min["tmp_cmf_cat_i_low"],
+        results_max["tmp_cmf_cat_i_low"],
+    ]
 
     # traces[0]
-    traces.append(go.Scatter(
-        x=np.concatenate([x_values, x_values[::-1]]),
-        y=np.concatenate([y_values_cat_iii_up, y_values_cat_iii_low[::-1]]),
-        fill='toself',
-        fillcolor='rgba(144, 238, 144, 0.3)',
-        line=dict(color='rgba(144, 238, 144, 0)', shape='linear'),
-        name='Category III',
-        mode='lines'
-    ))
+    traces.append(
+        go.Scatter(
+            x=np.concatenate([x_values, x_values[::-1]]),
+            y=np.concatenate([y_values_cat_iii_up, y_values_cat_iii_low[::-1]]),
+            fill="toself",
+            fillcolor="rgba(144, 238, 144, 0.3)",
+            line=dict(color="rgba(144, 238, 144, 0)", shape="linear"),
+            name="Category III",
+            mode="lines",
+        )
+    )
     # traces[1]
-    traces.append(go.Scatter(
-        x=np.concatenate([x_values, x_values[::-1]]),
-        y=np.concatenate([y_values_cat_ii_up, y_values_cat_ii_low[::-1]]),
-        fill='toself',
-        fillcolor='rgba(34, 139, 34, 0.5)',
-        line=dict(color='rgba(34, 139, 34, 0)', shape='linear'),
-        name='Category II',
-        mode='lines'
-    ))
+    traces.append(
+        go.Scatter(
+            x=np.concatenate([x_values, x_values[::-1]]),
+            y=np.concatenate([y_values_cat_ii_up, y_values_cat_ii_low[::-1]]),
+            fill="toself",
+            fillcolor="rgba(34, 139, 34, 0.5)",
+            line=dict(color="rgba(34, 139, 34, 0)", shape="linear"),
+            name="Category II",
+            mode="lines",
+        )
+    )
     # traces[2]
-    traces.append(go.Scatter(
-        x=np.concatenate([x_values, x_values[::-1]]),
-        y=np.concatenate([y_values_cat_i_up, y_values_cat_i_low[::-1]]),
-        fill='toself',
-        fillcolor='rgba(0, 100, 0, 0.7)',
-        line=dict(color='rgba(0, 100, 0, 0)', shape='linear'),
-        name='Category I',
-        mode='lines'
-    ))
+    traces.append(
+        go.Scatter(
+            x=np.concatenate([x_values, x_values[::-1]]),
+            y=np.concatenate([y_values_cat_i_up, y_values_cat_i_low[::-1]]),
+            fill="toself",
+            fillcolor="rgba(0, 100, 0, 0.7)",
+            line=dict(color="rgba(0, 100, 0, 0)", shape="linear"),
+            name="Category I",
+            mode="lines",
+        )
+    )
     x = 25
     y = t_o(tdb=25, tr=25, v=0.1)
     red_point = [x, y]
     # traces[3]
-    traces.append(go.Scatter(
-        x=[red_point[0]],
-        y=[red_point[1]],
-        mode='markers',
-        marker=dict(
-            color='red',
-            size=6,
-        ),
-        # name='point',
-        showlegend=False,
-    ))
+    traces.append(
+        go.Scatter(
+            x=[red_point[0]],
+            y=[red_point[1]],
+            mode="markers",
+            marker=dict(
+                color="red",
+                size=6,
+            ),
+            # name='point',
+            showlegend=False,
+        )
+    )
     theta = np.linspace(0, 2 * np.pi, 100)
     circle_x = red_point[0] + 0.5 * np.cos(theta)
     circle_y = red_point[1] + 0.7 * np.sin(theta)
     # traces[4]
-    traces.append(go.Scatter(
-        x=circle_x,
-        y=circle_y,
-        mode='lines',
-        line=dict(color='red', width=2.5),
-        # name='circle',
-        showlegend=False,
-    ))
+    traces.append(
+        go.Scatter(
+            x=circle_x,
+            y=circle_y,
+            mode="lines",
+            line=dict(color="red", width=2.5),
+            # name='circle',
+            showlegend=False,
+        )
+    )
 
     layout = go.Layout(
-        title='Adaptive Chart',
+        title="Adaptive Chart",
         xaxis=dict(
-            title='Outdoor Running Mean Temperature [℃]',
+            title="Outdoor Running Mean Temperature [℃]",
             range=[10, 30],
             dtick=2,
             showgrid=True,
-            gridcolor='lightgray',
+            gridcolor="lightgray",
             gridwidth=1.5,
-            ticks='outside',
+            ticks="outside",
             ticklen=5,
             showline=True,
             linewidth=1.5,
-            linecolor='black',
+            linecolor="black",
         ),
         yaxis=dict(
-            title='Operative Temperature [℃]',
+            title="Operative Temperature [℃]",
             range=[14, 36],
             dtick=2,
             showgrid=True,
-            gridcolor='lightgray',
+            gridcolor="lightgray",
             gridwidth=1.5,
-            ticks='outside',
+            ticks="outside",
             ticklen=5,
             showline=True,
             linewidth=1.5,
-            linecolor='black',
+            linecolor="black",
         ),
         legend=dict(x=0.8, y=1),
         showlegend=False,
-        plot_bgcolor='white'
+        plot_bgcolor="white",
     )
     fig = go.Figure(data=traces, layout=layout)
     return fig
 
 
-
 def t_rh_pmv(
-        inputs: dict = None,
-        model: str = "iso",
-        function_selection: str = Functionalities.Default,
+    inputs: dict = None,
+    model: str = "iso",
+    function_selection: str = Functionalities.Default,
 ):
     results = []
     pmv_limits = [-0.5, 0.5]
@@ -187,20 +214,21 @@ def t_rh_pmv(
         results = []
         for pmv_limit in pmv_limits:
             for rh in np.arange(0, 110, 10):
+
                 def function(x):
                     return (
-                            pmv(
-                                x,
-                                tr=tr,
-                                vr=vr,
-                                rh=rh,
-                                met=met,
-                                clo=clo,
-                                wme=0,
-                                standard=model,
-                                limit_inputs=False,
-                            )
-                            - pmv_limit
+                        pmv(
+                            x,
+                            tr=tr,
+                            vr=vr,
+                            rh=rh,
+                            met=met,
+                            clo=clo,
+                            wme=0,
+                            standard=model,
+                            limit_inputs=False,
+                        )
+                        - pmv_limit
                     )
 
                 temp = optimize.brentq(function, 10, 100)
@@ -269,16 +297,16 @@ def t_rh_pmv(
         go.Scatter(
             x=xx.flatten(),
             y=yy.flatten(),
-            mode='markers',
-            marker=dict(color='rgba(0,0,0,0)'),
-            hoverinfo='x+y',
-            name='Interactive Hover Area',
+            mode="markers",
+            marker=dict(color="rgba(0,0,0,0)"),
+            hoverinfo="x+y",
+            name="Interactive Hover Area",
         )
     )
 
     if (
-            function_selection == Functionalities.Compare.value
-            and clo_d_compare is not None
+        function_selection == Functionalities.Compare.value
+        and clo_d_compare is not None
     ):
         df_compare = calculate_pmv_results(
             tr=inputs[ElementsIDs.t_r_input_input2.value],
@@ -319,7 +347,6 @@ def t_rh_pmv(
             )
         )
 
-
     annotation_text = (
         f"t<sub>db</sub>: {inputs[ElementsIDs.t_db_input.value]:.1f} °C<br>"
         f"RH: {inputs[ElementsIDs.rh_input.value]:.1f} %<br>"
@@ -355,8 +382,7 @@ def t_rh_pmv(
         showlegend=False,
         plot_bgcolor="white",
         margin=dict(l=40, r=40, t=40, b=40),
-
-        hovermode='closest',
+        hovermode="closest",
         hoverdistance=5,
     )
 

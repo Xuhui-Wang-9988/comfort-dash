@@ -171,7 +171,7 @@ def pmv_en_psy_chart(
 
     layout = go.Layout(
         xaxis=dict(title=x_label, showgrid=False),
-        yaxis=dict(title="Humidity Ratio [g_w/kg_da]", showgrid=False),
+        yaxis=dict(title="Humidity Ratio [g<sub>w</sub>/kg<sub>da</sub>]", showgrid=False),
         showlegend=True,
         plot_bgcolor="white",
         annotations=[
